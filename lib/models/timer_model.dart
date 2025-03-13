@@ -12,6 +12,7 @@ class TimerModel {
   int restDuration = 5 * 60;  // 默认休息时间5分钟（以秒为单位）
   int remainingSeconds = 0;   // 剩余秒数
   TimerStatus status = TimerStatus.idle; // 当前状态
+  TimerStatus? _previousStatus; // 保存暂停前的状态
   Timer? _timer;              // 计时器
   Function? onTick;           // 计时回调
   Function? onComplete;       // 完成回调
@@ -34,6 +35,7 @@ class TimerModel {
   void pause() {
     if (_timer != null && _timer!.isActive) {
       _timer!.cancel();
+      _previousStatus = status; // 保存当前状态
       status = TimerStatus.paused;
     }
   }
@@ -41,10 +43,9 @@ class TimerModel {
   // 继续计时
   void resume() {
     if (status == TimerStatus.paused) {
-      if (remainingSeconds > 0) {
-        status = (status == TimerStatus.working || status == TimerStatus.paused) 
-            ? TimerStatus.working 
-            : TimerStatus.resting;
+      if (remainingSeconds > 0 && _previousStatus != null) {
+        status = _previousStatus!; // 恢复到之前的状态
+        _previousStatus = null; // 清除保存的状态
         _startTimer();
       }
     }
